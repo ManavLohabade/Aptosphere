@@ -1,0 +1,21 @@
+{
+  "name": "aptosphere",
+  "version": "1.0.0",
+  "description": "Parallel SocialFi Layer on Aptos - Real-time on-chain world state",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "backend:dev": "cd backend && npm run dev",
+    "frontend:dev": "cd frontend && npm run dev",
+    "build": "npm run frontend:build",
+    "frontend:build": "cd frontend && npm run build",
+    "deploy:contracts": "cd contracts && aptos move publish",
+    "test:contracts": "cd contracts && aptos move test"
+  },
+  "keywords": ["aptos", "blockchain", "socialfi", "realtime", "move"],
+  "author": "Aptosphere Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
