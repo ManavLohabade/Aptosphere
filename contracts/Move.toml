@@ -5,9 +5,9 @@ authors = ["Aptosphere Team"]
 license = "MIT"
 
 [dependencies]
-AptosFramework = { local = "../../aptos-core/aptos-move/framework" }
-AptosStdlib = { local = "../../aptos-core/aptos-move/framework" }
-AptosToken = { local = "../../aptos-core/aptos-move/framework" }
+AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework", rev = "main" }
+AptosStdlib = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework", rev = "main" }
+AptosToken = { git = "https://github.com/aptos-labs/aptos-core.git", subdir = "aptos-move/framework", rev = "main" }
 
 [addresses]
 aptosphere = "0x1"

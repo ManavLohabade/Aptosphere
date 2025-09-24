@@ -9,7 +9,7 @@ class EventService {
       return
     }
 
-    const API_URL = process.env.VITE_API_URL || 'http://localhost:3001'
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
     this.socket = io(API_URL, {
       transports: ['websocket'],
       autoConnect: true

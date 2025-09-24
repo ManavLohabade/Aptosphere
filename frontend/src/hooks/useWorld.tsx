@@ -55,11 +55,6 @@ export function WorldProvider({ children }: { children: React.ReactNode }) {
     totalItems: 0,
     lastUpdate: new Date().toISOString()
   })
-  const [isConnected, setIsConnected] = useState(false)
-
-  useEffect(() => {
-    setIsConnected(isConnected)
-  }, [isConnected])
 
   useEffect(() => {
     if (isConnected) {
@@ -108,7 +103,7 @@ export function WorldProvider({ children }: { children: React.ReactNode }) {
 
       const payload = {
         type: 'entry_function_payload',
-        function: `${process.env.VITE_CONTRACT_ADDRESS}::world::join_world`,
+        function: `${import.meta.env.VITE_CONTRACT_ADDRESS}::world::join_world`,
         arguments: [Buffer.from(username).toString('hex')]
       }
 
@@ -129,7 +124,7 @@ export function WorldProvider({ children }: { children: React.ReactNode }) {
 
       const payload = {
         type: 'entry_function_payload',
-        function: `${process.env.VITE_CONTRACT_ADDRESS}::world::leave_world`,
+        function: `${import.meta.env.VITE_CONTRACT_ADDRESS}::world::leave_world`,
         arguments: []
       }
 
@@ -150,7 +145,7 @@ export function WorldProvider({ children }: { children: React.ReactNode }) {
 
       const payload = {
         type: 'entry_function_payload',
-        function: `${process.env.VITE_CONTRACT_ADDRESS}::world::move_player`,
+        function: `${import.meta.env.VITE_CONTRACT_ADDRESS}::world::move_player`,
         arguments: [x, y]
       }
 
@@ -171,7 +166,7 @@ export function WorldProvider({ children }: { children: React.ReactNode }) {
 
       const payload = {
         type: 'entry_function_payload',
-        function: `${process.env.VITE_CONTRACT_ADDRESS}::world::send_tip`,
+        function: `${import.meta.env.VITE_CONTRACT_ADDRESS}::world::send_tip`,
         arguments: [recipient, amount]
       }
 
@@ -192,7 +187,7 @@ export function WorldProvider({ children }: { children: React.ReactNode }) {
 
       const payload = {
         type: 'entry_function_payload',
-        function: `${process.env.VITE_CONTRACT_ADDRESS}::items::mint_item`,
+        function: `${import.meta.env.VITE_CONTRACT_ADDRESS}::items::mint_item`,
         arguments: [Buffer.from(name).toString('hex')]
       }
 
@@ -213,7 +208,7 @@ export function WorldProvider({ children }: { children: React.ReactNode }) {
 
       const payload = {
         type: 'entry_function_payload',
-        function: `${process.env.VITE_CONTRACT_ADDRESS}::items::transfer_item`,
+        function: `${import.meta.env.VITE_CONTRACT_ADDRESS}::items::transfer_item`,
         arguments: [recipient, itemId]
       }
 
@@ -234,7 +229,7 @@ export function WorldProvider({ children }: { children: React.ReactNode }) {
 
       const payload = {
         type: 'entry_function_payload',
-        function: `${process.env.VITE_CONTRACT_ADDRESS}::items::trade_items`,
+        function: `${import.meta.env.VITE_CONTRACT_ADDRESS}::items::trade_items`,
         arguments: [recipient, myItemId, theirItemId]
       }
 

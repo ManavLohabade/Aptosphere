@@ -132,6 +132,12 @@ class AptosService {
     try {
       console.log(`Starting event monitoring for contract: ${contractAddress}`);
       
+      // Check if this is a placeholder contract address
+      if (contractAddress === '0x1234567890abcdef1234567890abcdef12345678') {
+        console.log('Using placeholder contract address - event monitoring disabled for demo');
+        return;
+      }
+      
       // Poll for events every 2 seconds
       setInterval(async () => {
         try {

@@ -10,7 +10,10 @@
     "build": "npm run frontend:build",
     "frontend:build": "cd frontend && npm run build",
     "deploy:contracts": "cd contracts && aptos move publish",
-    "test:contracts": "cd contracts && aptos move test"
+    "test:contracts": "cd contracts && aptos move test",
+    "demo": "cd scripts && npm run demo",
+    "full-demo": "cd scripts && npm run full-demo",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install && cd ../scripts && npm install"
   },
   "keywords": ["aptos", "blockchain", "socialfi", "realtime", "move"],
   "author": "Aptosphere Team",

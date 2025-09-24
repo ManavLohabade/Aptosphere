@@ -1,7 +1,4 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { AptosWalletAdapterProvider } from '@martianwallet/aptos-wallet-adapter'
-import { MartianWallet } from '@martianwallet/aptos-wallet-adapter'
-import { Network } from '@aptos-labs/ts-sdk'
 import toast from 'react-hot-toast'
 
 interface WalletContextType {
@@ -16,7 +13,32 @@ interface WalletContextType {
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined)
 
-const wallets = [new MartianWallet()]
+// Wallet detection function
+const getAvailableWallet = () => {
+  if (typeof window === 'undefined') return null
+  
+  // Check for Martian Wallet first (preferred)
+  if (window.martian) {
+    return window.martian
+  }
+  
+  // Check for Petra Wallet
+  if (window.petra) {
+    return window.petra
+  }
+  
+  // Check for generic aptos wallet
+  if (window.aptos) {
+    return window.aptos
+  }
+  
+  // Check for other common wallet names
+  if (window.aptosWallet) {
+    return window.aptosWallet
+  }
+  
+  return null
+}
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [account, setAccount] = useState<string | null>(null)
@@ -27,13 +49,13 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     // Check if wallet is already connected
     const checkConnection = async () => {
       try {
-        const martianWallet = wallets[0]
-        if (martianWallet) {
-          const connected = await martianWallet.isConnected()
+        const wallet = getAvailableWallet()
+        if (wallet) {
+          const connected = await wallet.isConnected()
           if (connected) {
-            const accounts = await martianWallet.accounts()
+            const accounts = await wallet.accounts()
             if (accounts.length > 0) {
-              setAccount(accounts[0].address)
+              setAccount(accounts[0])
               setIsConnected(true)
             }
           }
@@ -49,17 +71,16 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const connect = async () => {
     try {
       setIsConnecting(true)
-      const martianWallet = wallets[0]
       
-      if (!martianWallet) {
-        throw new Error('Martian Wallet not found. Please install the extension.')
+      const wallet = getAvailableWallet()
+      if (!wallet) {
+        throw new Error('No Aptos wallet found. Please install Martian Wallet or Petra Wallet extension.')
       }
 
-      await martianWallet.connect()
-      const accounts = await martianWallet.accounts()
+      const response = await wallet.connect()
       
-      if (accounts.length > 0) {
-        setAccount(accounts[0].address)
+      if (response) {
+        setAccount(response.address)
         setIsConnected(true)
         toast.success('Wallet connected successfully!')
       } else {
@@ -75,9 +96,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const disconnect = async () => {
     try {
-      const martianWallet = wallets[0]
-      if (martianWallet) {
-        await martianWallet.disconnect()
+      const wallet = getAvailableWallet()
+      if (wallet) {
+        await wallet.disconnect()
       }
       
       setAccount(null)
@@ -91,12 +112,12 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const signAndSubmitTransaction = async (payload: any): Promise<string> => {
     try {
-      const martianWallet = wallets[0]
-      if (!martianWallet || !isConnected) {
+      const wallet = getAvailableWallet()
+      if (!wallet || !isConnected) {
         throw new Error('Wallet not connected')
       }
 
-      const response = await martianWallet.signAndSubmitTransaction(payload)
+      const response = await wallet.signAndSubmitTransaction(payload)
       
       if (response.hash) {
         toast.success('Transaction submitted successfully!')
@@ -113,12 +134,12 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const getAccountInfo = async () => {
     try {
-      const martianWallet = wallets[0]
-      if (!martianWallet || !isConnected) {
+      const wallet = getAvailableWallet()
+      if (!wallet || !isConnected) {
         throw new Error('Wallet not connected')
       }
 
-      const accounts = await martianWallet.accounts()
+      const accounts = await wallet.accounts()
       return accounts[0]
     } catch (error: any) {
       console.error('Failed to get account info:', error)
@@ -137,11 +158,9 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AptosWalletAdapterProvider plugins={wallets} autoConnect={false}>
-      <WalletContext.Provider value={value}>
-        {children}
-      </WalletContext.Provider>
-    </AptosWalletAdapterProvider>
+    <WalletContext.Provider value={value}>
+      {children}
+    </WalletContext.Provider>
   )
 }
 
@@ -151,4 +170,38 @@ export function useWallet() {
     throw new Error('useWallet must be used within a WalletProvider')
   }
   return context
+}
+
+// Extend Window interface for TypeScript
+declare global {
+  interface Window {
+    martian?: {
+      connect: () => Promise<{ address: string }>
+      disconnect: () => Promise<void>
+      isConnected: () => Promise<boolean>
+      accounts: () => Promise<string[]>
+      signAndSubmitTransaction: (payload: any) => Promise<{ hash: string }>
+    }
+    petra?: {
+      connect: () => Promise<{ address: string }>
+      disconnect: () => Promise<void>
+      isConnected: () => Promise<boolean>
+      accounts: () => Promise<string[]>
+      signAndSubmitTransaction: (payload: any) => Promise<{ hash: string }>
+    }
+    aptos?: {
+      connect: () => Promise<{ address: string }>
+      disconnect: () => Promise<void>
+      isConnected: () => Promise<boolean>
+      accounts: () => Promise<string[]>
+      signAndSubmitTransaction: (payload: any) => Promise<{ hash: string }>
+    }
+    aptosWallet?: {
+      connect: () => Promise<{ address: string }>
+      disconnect: () => Promise<void>
+      isConnected: () => Promise<boolean>
+      accounts: () => Promise<string[]>
+      signAndSubmitTransaction: (payload: any) => Promise<{ hash: string }>
+    }
+  }
 }
