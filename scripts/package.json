@@ -1,0 +1,17 @@
+{
+  "name": "aptosphere-scripts",
+  "version": "1.0.0",
+  "description": "Deployment and testing scripts for Aptosphere",
+  "main": "index.js",
+  "scripts": {
+    "deploy": "node deploy.js",
+    "test": "node test.js",
+    "demo": "node deploy.js && node test.js"
+  },
+  "dependencies": {
+    "aptos": "^1.20.0"
+  },
+  "keywords": ["aptos", "deployment", "testing", "move"],
+  "author": "Aptosphere Team",
+  "license": "MIT"
+}

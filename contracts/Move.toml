@@ -1,0 +1,13 @@
+[package]
+name = "aptosphere"
+version = "1.0.0"
+authors = ["Aptosphere Team"]
+license = "MIT"
+
+[dependencies]
+AptosFramework = { local = "../../aptos-core/aptos-move/framework" }
+AptosStdlib = { local = "../../aptos-core/aptos-move/framework" }
+AptosToken = { local = "../../aptos-core/aptos-move/framework" }
+
+[addresses]
+aptosphere = "0x1"
