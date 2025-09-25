@@ -6,6 +6,7 @@ const dotenv = require('dotenv');
 const aptosService = require('./services/aptosService');
 const worldStateService = require('./services/worldStateService');
 const eventService = require('./services/eventService');
+const gameService = require('./gameService');
 
 // Load environment variables
 dotenv.config();
@@ -71,6 +72,42 @@ function handleClientMessage(clientId, data) {
       // Heartbeat
       clients.get(clientId)?.send(JSON.stringify({ type: 'pong' }));
       break;
+    case 'game_move':
+      // Handle game movement
+      try {
+        const { playerId, x, y } = data;
+        console.log(`Player ${playerId} moving to (${x}, ${y})`);
+        const result = gameService.movePlayer(playerId, x, y);
+        clients.get(clientId)?.send(JSON.stringify({ 
+          type: 'game_update', 
+          data: result 
+        }));
+      } catch (error) {
+        console.error('Game move error:', error);
+        clients.get(clientId)?.send(JSON.stringify({ 
+          type: 'error', 
+          message: error.message 
+        }));
+      }
+      break;
+    case 'game_commit':
+      // Handle game commit
+      try {
+        const { playerId, rootHash, tick } = data;
+        console.log(`Player ${playerId} committing world state`);
+        const result = gameService.commitWorldState(playerId, rootHash, tick);
+        clients.get(clientId)?.send(JSON.stringify({ 
+          type: 'game_update', 
+          data: result 
+        }));
+      } catch (error) {
+        console.error('Game commit error:', error);
+        clients.get(clientId)?.send(JSON.stringify({ 
+          type: 'error', 
+          message: error.message 
+        }));
+      }
+      break;
     default:
       console.log('Unknown message type:', data.type);
   }
@@ -109,6 +146,73 @@ app.get('/api/events', (req, res) => {
   res.json(eventService.getRecentEvents());
 });
 
+// Game routes
+app.post('/api/game/create', (req, res) => {
+  try {
+    const { playerId, playerName, gameTime = 15 } = req.body;
+    const result = gameService.createGame(playerId, playerName, gameTime);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/api/game/join', (req, res) => {
+  try {
+    const { gameId, playerId, playerName } = req.body;
+    const result = gameService.joinGame(gameId, playerId, playerName);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/api/game/move', (req, res) => {
+  try {
+    const { playerId, x, y } = req.body;
+    const result = gameService.movePlayer(playerId, x, y);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.post('/api/game/commit', (req, res) => {
+  try {
+    const { playerId, rootHash, tick } = req.body;
+    const result = gameService.commitWorldState(playerId, rootHash, tick);
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.get('/api/game/state/:gameId', (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const result = gameService.getGameState(gameId);
+    if (!result) {
+      return res.status(404).json({ error: 'Game not found' });
+    }
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+app.get('/api/game/player/:playerId', (req, res) => {
+  try {
+    const { playerId } = req.params;
+    const result = gameService.getPlayerGame(playerId);
+    if (!result) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Start event monitoring
 async function startEventMonitoring() {
   try {
@@ -139,6 +243,49 @@ async function startEventMonitoring() {
     console.error('Failed to start event monitoring:', error);
   }
 }
+
+// Game event listeners
+gameService.on('playerJoined', (data) => {
+  broadcastToClients({
+    type: 'player_joined',
+    data
+  });
+});
+
+gameService.on('playerMoved', (data) => {
+  broadcastToClients({
+    type: 'player_moved',
+    data
+  });
+});
+
+gameService.on('worldStateCommitted', (data) => {
+  broadcastToClients({
+    type: 'world_state_committed',
+    data
+  });
+});
+
+gameService.on('nodeCollected', (data) => {
+  broadcastToClients({
+    type: 'node_collected',
+    data
+  });
+});
+
+gameService.on('gameStateUpdate', (data) => {
+  broadcastToClients({
+    type: 'game_state_update',
+    data
+  });
+});
+
+gameService.on('gameEnded', (data) => {
+  broadcastToClients({
+    type: 'game_ended',
+    data
+  });
+});
 
 // Initialize services
 async function initialize() {

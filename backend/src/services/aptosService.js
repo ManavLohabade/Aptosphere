@@ -170,6 +170,34 @@ class AptosService {
     }
   }
 
+  // Call contract functions
+  async callContractFunction(sender, contractAddress, moduleName, functionName, args = []) {
+    try {
+      const payload = {
+        type: 'entry_function_payload',
+        function: `${contractAddress}::${moduleName}::${functionName}`,
+        arguments: args
+      };
+
+      const result = await this.submitTransaction(sender, payload);
+      return result;
+    } catch (error) {
+      console.error('Failed to call contract function:', error);
+      throw error;
+    }
+  }
+
+  // Get contract resource
+  async getContractResource(contractAddress, resourceType) {
+    try {
+      const resource = await this.getAccountResource(contractAddress, resourceType);
+      return resource;
+    } catch (error) {
+      console.error('Failed to get contract resource:', error);
+      throw error;
+    }
+  }
+
   // Get current gas price
   async getGasPrice() {
     try {
