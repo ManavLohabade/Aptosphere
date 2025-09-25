@@ -41,6 +41,7 @@ interface WorldContextType {
   mintItem: (name: string) => Promise<void>
   transferItem: (recipient: string, itemId: number) => Promise<void>
   tradeItems: (recipient: string, myItemId: number, theirItemId: number) => Promise<void>
+  commitWorldState: (rootHash: string, tick: number) => Promise<void>
   refreshWorldState: () => Promise<void>
 }
 
@@ -72,7 +73,7 @@ export function WorldProvider({ children }: { children: React.ReactNode }) {
       })
 
       eventService.on('player_moved', (data: any) => {
-        toast.info(`${data.username} moved to (${data.new_x}, ${data.new_y})`)
+        toast.success(`${data.username} moved to (${data.new_x}, ${data.new_y})`)
         refreshWorldState()
       })
 
@@ -101,10 +102,25 @@ export function WorldProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Wallet not connected')
       }
 
+      // Check if using placeholder contract address
+      const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS
+      console.log('Contract address:', contractAddress)
+      console.log('Is placeholder?', contractAddress === '0x1234567890abcdef1234567890abcdef12345678')
+      
+      if (contractAddress === '0x1234567890abcdef1234567890abcdef12345678') {
+        // Demo mode - simulate joining without blockchain transaction
+        console.log('Entering demo mode')
+        toast.success(`Welcome to Aptosphere, ${username}! (Demo Mode)`)
+        await refreshWorldState()
+        return
+      }
+
+      // Convert username to proper format for Move contract
+      const usernameBytes = Array.from(new TextEncoder().encode(username))
       const payload = {
         type: 'entry_function_payload',
-        function: `${import.meta.env.VITE_CONTRACT_ADDRESS}::world::join_world`,
-        arguments: [Buffer.from(username).toString('hex')]
+        function: `${contractAddress}::World::join_world`,
+        arguments: [usernameBytes]
       }
 
       await signAndSubmitTransaction(payload)
@@ -122,9 +138,18 @@ export function WorldProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Wallet not connected')
       }
 
+      // Check if using placeholder contract address
+      const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS
+      if (contractAddress === '0x1234567890abcdef1234567890abcdef12345678') {
+        // Demo mode - simulate leaving without blockchain transaction
+        toast.success('Left the world successfully (Demo Mode)')
+        await refreshWorldState()
+        return
+      }
+
       const payload = {
         type: 'entry_function_payload',
-        function: `${import.meta.env.VITE_CONTRACT_ADDRESS}::world::leave_world`,
+        function: `${contractAddress}::world::leave_world`,
         arguments: []
       }
 
@@ -143,10 +168,19 @@ export function WorldProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Wallet not connected')
       }
 
+      // Check if using placeholder contract address
+      const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS
+      if (contractAddress === '0x1234567890abcdef1234567890abcdef12345678') {
+        // Demo mode - simulate movement without blockchain transaction
+        toast.success(`Moved to (${x}, ${y}) (Demo Mode)`)
+        await refreshWorldState()
+        return
+      }
+
       const payload = {
         type: 'entry_function_payload',
-        function: `${import.meta.env.VITE_CONTRACT_ADDRESS}::world::move_player`,
-        arguments: [x, y]
+        function: `${contractAddress}::World::move_player`,
+        arguments: [x.toString(), y.toString()]
       }
 
       await signAndSubmitTransaction(payload)
@@ -188,7 +222,7 @@ export function WorldProvider({ children }: { children: React.ReactNode }) {
       const payload = {
         type: 'entry_function_payload',
         function: `${import.meta.env.VITE_CONTRACT_ADDRESS}::items::mint_item`,
-        arguments: [Buffer.from(name).toString('hex')]
+        arguments: [Array.from(new TextEncoder().encode(name)).map(b => b.toString(16).padStart(2, '0')).join('')]
       }
 
       await signAndSubmitTransaction(payload)
@@ -242,6 +276,39 @@ export function WorldProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const commitWorldState = async (rootHash: string, tick: number) => {
+    try {
+      if (!account) {
+        throw new Error('Wallet not connected')
+      }
+
+      // Check if using placeholder contract address
+      const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS
+      if (contractAddress === '0x1234567890abcdef1234567890abcdef12345678') {
+        // Demo mode - simulate commit without blockchain transaction
+        console.log('Demo mode: Simulating world state commit')
+        toast.success(`World state committed! Tick: ${tick}`)
+        return
+      }
+
+      // Convert rootHash to bytes
+      const rootHashBytes = Array.from(new TextEncoder().encode(rootHash))
+      
+      const payload = {
+        type: 'entry_function_payload',
+        function: `${contractAddress}::World::commit_world_state`,
+        arguments: [rootHashBytes, tick.toString()]
+      }
+
+      await signAndSubmitTransaction(payload)
+      toast.success(`World state committed! Tick: ${tick}`)
+      await refreshWorldState()
+    } catch (error: any) {
+      console.error('Failed to commit world state:', error)
+      toast.error(`Failed to commit world state: ${error.message}`)
+    }
+  }
+
   const refreshWorldState = async () => {
     try {
       const state = await worldService.getWorldState()
@@ -262,6 +329,7 @@ export function WorldProvider({ children }: { children: React.ReactNode }) {
     mintItem,
     transferItem,
     tradeItems,
+    commitWorldState,
     refreshWorldState
   }
 
